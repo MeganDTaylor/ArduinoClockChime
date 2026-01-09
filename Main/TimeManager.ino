@@ -5,13 +5,11 @@
 #include <WiFi.h>
 #include <time.h>
 
-// ---- WIFI CREDENTIALS ----
-const char *WIFI_SSID = "ssid";
-const char *WIFI_PASS = "password";
+#define WIFI_LED 2 // Built-in LED pin
 
-// ---- INTERNAL tracking for "run once" events ----
-int lastMinuteChecked = -1;
-int lastHourChecked = -1;
+// ---- WIFI CREDENTIALS ----
+const char *WIFI_SSID = "YourSSID";
+const char *WIFI_PASS = "YourPassword";
 
 // =====================================================
 // Connect to WiFi
@@ -21,13 +19,17 @@ void connectWiFi()
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
-  Serial.print("Connecting to WiFi");
+  // Blink while connecting
   while (WiFi.status() != WL_CONNECTED)
   {
-    Serial.print(".");
+    digitalWrite(WIFI_LED, HIGH);
+    delay(300);
+    digitalWrite(WIFI_LED, LOW);
     delay(300);
   }
-  Serial.println("\nWiFi connected!");
+
+  // Solid ON once connected
+  digitalWrite(WIFI_LED, HIGH);
 }
 
 // =====================================================
@@ -69,48 +71,78 @@ int getDayOfWeek() { return getLocalTimeStruct().tm_wday; } // Sunday = 0
 // Scheduling Functions
 // =====================================================
 
-// Fires once per day at EXACT hour/minute
-bool isTime(int hour, int minute)
-{
-  tm t = getLocalTimeStruct();
+// bool isTimeMonth(int hourCheck, int minuteCheck, int monthCheck) {
+//     struct tm timeinfo;
+//     if (!getLocalTime(&timeinfo)) return false;
+//
+//     int currentHour   = timeinfo.tm_hour;
+//     int currentMinute = timeinfo.tm_min;
+//     int currentMonth  = timeinfo.tm_mon + 1;
+//
+//     // This 'static' variable is unique to EACH version of this function call
+//     // because it "remembers" its state between loops.
+//     static int lastFiredHour = -1;
+//
+//     if (currentHour == hourCheck && currentMinute == minuteCheck && currentMonth == monthCheck) {
+//         // Only fire if we haven't fired during THIS specific hour
+//         if (lastFiredHour != currentHour) {
+//             lastFiredHour = currentHour;
+//             return true;
+//         }
+//     }
+//
+//     // Reset the lock once the minute has passed so it's ready for tomorrow
+//     if (currentMinute != minuteCheck) {
+//         lastFiredHour = -1;
+//     }
+//
+//     return false;
+// }
 
-  if (t.tm_hour == hour && t.tm_min == minute)
+bool isTimeMonth(int hourCheck, int minuteCheck, int monthCheck)
+{
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo))
+    return false;
+
+  int currentHour = timeinfo.tm_hour;
+  int currentMinute = timeinfo.tm_min;
+  int currentMonth = timeinfo.tm_mon + 1;
+
+  // By combining Hour and Minute into a single 'stamp',
+  // we create a unique ID for this specific trigger window.
+  static int lastFiredStamp = -1;
+  int currentStamp = (currentHour * 100) + currentMinute;
+
+  if (currentHour == hourCheck && currentMinute == minuteCheck && currentMonth == monthCheck)
   {
-    if (lastMinuteChecked != minute)
+    if (lastFiredStamp != currentStamp)
     {
-      lastMinuteChecked = minute;
+      lastFiredStamp = currentStamp;
       return true;
     }
   }
   return false;
 }
 
-// Fires once per week at exact time + exact day
-bool isTimeAndDay(int hour, int minute, int day)
+bool isTimeNotMonth(int hourCheck, int minuteCheck, int monthCheck)
 {
-  tm t = getLocalTimeStruct();
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo))
+    return false;
 
-  if (t.tm_wday == day && t.tm_hour == hour && t.tm_min == minute)
+  int currentHour = timeinfo.tm_hour;
+  int currentMinute = timeinfo.tm_min;
+  int currentMonth = timeinfo.tm_mon + 1;
+
+  static int lastFiredStamp = -1;
+  int currentStamp = (currentHour * 100) + currentMinute;
+
+  if (currentHour == hourCheck && currentMinute == minuteCheck && currentMonth != monthCheck)
   {
-    if (lastMinuteChecked != minute)
+    if (lastFiredStamp != currentStamp)
     {
-      lastMinuteChecked = minute;
-      return true;
-    }
-  }
-  return false;
-}
-
-// Fires once every hour on the hour (hh:00:00)
-bool isHourly()
-{
-  tm t = getLocalTimeStruct();
-
-  if (t.tm_min == 0 && t.tm_sec == 0)
-  {
-    if (lastHourChecked != t.tm_hour)
-    {
-      lastHourChecked = t.tm_hour;
+      lastFiredStamp = currentStamp;
       return true;
     }
   }

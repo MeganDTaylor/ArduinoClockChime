@@ -1,28 +1,15 @@
-// =======================
+#include <WiFi.h>
+
+
+/// =======================
 // NOTE DEFINITIONS
 // =======================
-#define C4  262
-#define D4  294
-#define E4  330
-#define F4  349
-#define G4  392
-#define A4  440
-#define Bb4 466
-#define B4  494
-#define C5  523
-#define D5  587
-#define Eb4 311
-#define Eb5 622
-#define Ab4 415
-#define A3 220
-#define Bb3 233
-#define Cs4 277
-#define Fs4 370
 #define F2  87
 #define A2  110
 #define Bb2 117
 #define B2  123
 #define C3  131
+#define Db3 136
 #define Cs3 139
 #define D3  147
 #define Eb3 156
@@ -34,19 +21,28 @@
 #define A3  220
 #define Bb3 233
 #define B3  247
+#define C4  262
+#define Db4 277
+#define Cs4 277
+#define D4  294
+#define Eb4 311
+#define E4  330
+#define F4  349
+#define Fs4 370
+#define Gb4 363
+#define G4  392
+#define Ab4 415
+#define A4  440
+#define Bb4 466
+#define B4  494
+#define C5  523
+#define Db5 544
+#define Cs5 554
+#define D5  587
+#define Eb5 622
 
+#define WIFI_LED 2   // Built-in LED pin
 
-// =======================
-// DURATIONS
-// =======================
-const int q  = 600;
-const int h  = q * 2;
-const int w  = q * 4;
-const int s  = (q * 1) / 4;
-const int e  = (q * 2) / 4;
-const int dq = (q * 3) / 2;
-const int he = h + e;
-const int dh = h + q;
 
 // =======================
 // SONG STATE STRUCTURE
@@ -75,7 +71,7 @@ struct SongState {
   bool active = false;
 };
 
-
+bool songStarted = false;
 SongState song;
 
 // =======================
@@ -169,6 +165,7 @@ void runSong() {
       ledcWriteTone(CH3, 0);
     }
   }
+  
   // End condition — only stop when ALL voices have played their final durations
   if (song.i1 >= song.len1 && song.i2 >= song.len2 && song.i3 >= song.len3
       && now >= song.next1 && now >= song.next2 && now >= song.next3) {
@@ -180,6 +177,9 @@ void runSong() {
 // SETUP + LOOP
 // =======================
 void setup() {
+  pinMode(WIFI_LED, OUTPUT);
+  digitalWrite(WIFI_LED, LOW);   // LED off initially
+  
   connectWiFi();   // Auto-connect
   initTime();
   
@@ -193,18 +193,32 @@ void setup() {
 }
 
 void loop() {
-  // Update the currently playing song
+  // 1. Always keep the buzzers running
   runSong();
 
-  // Example: Play something daily at 18:45
-  if (isTime(15, 00)) {playSong_AngelsWeHaveHeardOnHigh();}
-  if (isTime(16, 00)) {playSong_HowGreatThouArt();}
-  if (isTime(17, 00)){playSong_AngelsWeHaveHeardOnHigh();}
-  if (isTime(18, 00)) {playSong_HowGreatThouArt();}
-  if (isTime(19, 00)) {playSong_AngelsWeHaveHeardOnHigh();}
-  if (isTime(20, 00)){playSong_HowGreatThouArt();}
-  if (isTimeAndDay(9, 30, 0)){playSong_WestminsterChimes();}
-  if (isTimeAndDay(21, 48, 0)){playSong_WestminsterChimes();}
+  // 2. WiFi Status LED
+  digitalWrite(WIFI_LED, WiFi.status() == WL_CONNECTED ? HIGH : LOW);
+
+  // 3. Scheduling Logic
+  // We only check for a new song if one isn't already playing
+  if (!song.active) {
+    
+    // December
+      if (isTimeMonth(15, 00, 12)) {playSong_AngelsWeHaveHeardOnHigh();}
+      if (isTimeMonth(16, 00, 12)) {playSong_JoyToTheWorld();}
+      if (isTimeMonth(17, 00, 12)) {playSong_HowGreatThouArt();}
+      if (isTimeMonth(18, 00, 12)) {playSong_OComeAllYeFaithful();}
+      if (isTimeMonth(19, 00, 12)) {playSong_SilentNight();}
+      if (isTimeMonth(20, 00, 12)) {playSong_TheFirstNoel();}
+  
+      // Not December
+      if (isTimeNotMonth(15, 00, 12)) {playSong_AmazingGrace();}
+      if (isTimeNotMonth(16, 00, 12)) {playSong_BattleHymn();}
+      if (isTimeNotMonth(17, 00, 12)){playSong_HowGreatThouArt();}
+      if (isTimeNotMonth(18, 00, 12)) {playSong_InTheGarden();}
+      if (isTimeNotMonth(19, 00, 12)) {playSong_ItIsWellWithMySoul();}
+      if (isTimeNotMonth(20, 00, 12)){playSong_SweetHourOfPrayer();}
+  }
+}
 
   
-}

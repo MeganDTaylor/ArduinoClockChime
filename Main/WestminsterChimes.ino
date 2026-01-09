@@ -5,7 +5,19 @@
 // SONG 3: Westminster Chimes
 // =======================
 void playSong_WestminsterChimes() {
-  // ---------- Soprano ----------
+  const int q  = 600;
+  const int h  = q * 2;
+  const int w  = q * 4;
+  const int s  = (q * 1) / 4;
+  const int e  = (q * 2) / 4;
+  const int dq = (q * 3) / 2;
+  const int he = h + e;
+  const int dh = h + q;
+  const int dqe = dq + e;
+  const int dqq = dq + q;
+  const int de = (e * 3) / 2;
+  const int dee = de + e;
+  const int wh = w + h;  // ---------- Soprano ----------
   static const int sopNotes[] = {
     F4,A4,G4,C4,C4,G4,A4,F4,A4,G4,F4,C4,C4,G4,A4,F4
   };
