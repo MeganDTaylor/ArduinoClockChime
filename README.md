@@ -25,8 +25,8 @@ Built on an ESP32 using LEDC PWM audio, NTP time synchronization, and customizab
 ├── main.ino               // main program, songs, scheduler
 ├── TimeManager.ino           // WiFi + NTP utilities
 ├── README.md              // this file
-├── HowGreatThouArt.ino
-├── AngelsWeHaveHeardOnHigh.ino
+├── Christmas.ino
+├── YearRound.ino
 ├── WestminsterChimes.ino
 └── wiring_diagram.png     // your generated wiring image
 ```
@@ -70,7 +70,7 @@ All libraries are built-in:
 In **TimeManager.ino**:
 
 ```cpp
-const char* WIFI_SSID     = "YourNetwork";
+const char* WIFI_SSID     = "YourSSID";
 const char* WIFI_PASSWORD = "YourPassword";
 ```
 
